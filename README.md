@@ -4,6 +4,7 @@ Just a fun plugin to show a cat on the right side of the screen at your cursorli
 
 ## Demo
 
+https://raw.githubusercontent.com/samuzora/pet.nvim/main/demo/pet.mp4
 
 ## Requirements
 
