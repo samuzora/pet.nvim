@@ -34,7 +34,7 @@ end
 
 -- pet sprites
 local afk_pet = { "  ╭──╮ ", "^.^──╯╮" }
-local moved_pet = { "^.^──╮╯", "  ╰──╯ " }
+local moved_pet = { "^.^──╮╮", "  ╰──╯╰" }
 
 local afk = function()
   if (namespace) then
