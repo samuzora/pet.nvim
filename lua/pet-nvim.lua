@@ -7,70 +7,95 @@
 -- TODO:
 --   1) Cat paces around
 --   2) Different pets!
+--
+--  BUG:
+--   1) Allow multiple cats on the same buffer (different window)
 
 local api = vim.api
 
 local compute_line_no = function()
   local line_no = api.nvim_win_get_cursor(0)[1]
   local line_count = api.nvim_buf_line_count(0)
-  if (line_count == line_no) then 
+  if (line_count == 1) then
+    -- buffer only has 1 line, we can't render the whole cat
+    return -1
+  elseif (line_count == line_no) then 
+    -- we are on the last line of the buffer, move the cat one line up
     return line_no - 2
   elseif (line_count > line_no) then
+    -- render normally
     return line_no - 1
   else 
     -- something wrong, kill cat :<
-    return -1
+    return -2
   end
 end
 
-local namespace = api.nvim_create_namespace('pet')
-local line_num = compute_line_no()
-local col_num = 0
+-- pet sprites
+local afk_pet = { "╭──╮ ", "^.^──╯╮" }
+local moved_pet = { "^.^──╮╯", "╰──╯ " }
 
-local start = function()
-  if (line_num == -1) then
+local afk = function()
+  if (namespace) then
+    api.nvim_buf_clear_namespace(0, namespace, 0, -1)
+  end
+  if (line_num == -2) then
     return
   end
-  api.nvim_buf_set_extmark(0, namespace, line_num, col_num, {
-    virt_text = {{ "╭──╮ ", "Normal" }},
-    virt_text_pos = "right_align",
-  })
-  api.nvim_buf_set_extmark(0, namespace, line_num + 1, col_num, {
-    virt_text = {{ "^.^──╯╮", "Normal" }},
-    virt_text_pos = "right_align",
-  })
+  if (line_num == -1) then
+    api.nvim_buf_set_extmark(0, namespace, 0, col_num, {
+      virt_text = {{ afk_pet[2], "Normal" }},
+      virt_text_pos = "right_align",
+    })
+  else 
+    api.nvim_buf_set_extmark(0, namespace, line_num, col_num, {
+      virt_text = {{ afk_pet[1], "Normal" }},
+      virt_text_pos = "right_align",
+    })
+    api.nvim_buf_set_extmark(0, namespace, line_num + 1, col_num, {
+      virt_text = {{ afk_pet[2], "Normal" }},
+      virt_text_pos = "right_align",
+    })
+  end
 end
-
 
 local moved = function()
   if (namespace) then
     api.nvim_buf_clear_namespace(0, namespace, 0, -1)
     line_num = compute_line_no()
-    if (line_num == -1) then
+    if (line_num == -2) then
       return
+    elseif (line_num == -1) then
+      api.nvim_buf_set_extmark(0, namespace, 0, col_num, {
+        virt_text = {{ moved_pet[1], "Normal" }},
+        virt_text_pos = "right_align",
+      })
+    else
+      api.nvim_buf_set_extmark(0, namespace, line_num, col_num, {
+        virt_text = {{ moved_pet[1], "Normal" }},
+        virt_text_pos = "right_align",
+      })
+      api.nvim_buf_set_extmark(0, namespace, line_num + 1, col_num, {
+        virt_text = {{ moved_pet[2], "Normal" }},
+        virt_text_pos = "right_align",
+      })
     end
-    api.nvim_buf_set_extmark(0, namespace, line_num, col_num, {
-      virt_text = {{ "^.^──╮╯", "Normal" }},
-      virt_text_pos = "right_align",
-    })
-    api.nvim_buf_set_extmark(0, namespace, line_num + 1, col_num, {
-      virt_text = {{ "╰──╯ ", "Normal" }},
-      virt_text_pos = "right_align",
-    })
   end
 end
 
-local afk = function()
-  if (namespace) then
-    api.nvim_buf_clear_namespace(0, namespace, 0, -1)
-    start()
-  end
+local start = function()
+  namespace = api.nvim_create_namespace('pet')
+  line_num = compute_line_no()
+  col_num = 0
+  afk()
 end
 
-start()
+api.nvim_create_autocmd({ "BufEnter" }, {
+  callback = start,
+})
 api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
   callback = moved,
 })
-api.nvim_create_autocmd({ "CursorHold" }, {
+api.nvim_create_autocmd({ "BufLeave", "CursorHold", "CursorHoldI" }, {
   callback = afk,
 })
