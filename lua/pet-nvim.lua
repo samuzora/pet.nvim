@@ -9,14 +9,16 @@
 --   2) Different pets!
 --
 --  BUG:
---   1) Cats appear weirdly in Floaterm
---   2) ~                      in Telescope
 
 local api = vim.api
 
 local compute_line_no = function()
   local line_no = api.nvim_win_get_cursor(0)[1]
   local line_count = api.nvim_buf_line_count(0)
+  local window = api.nvim_win_get_config(api.nvim_get_current_win())
+  if (window.relative or window.external) then
+    return -2
+  end
   if (line_count == 1) then
     -- buffer only has 1 line, we can't render the whole cat
     return -1
