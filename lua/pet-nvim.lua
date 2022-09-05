@@ -9,7 +9,6 @@
 --   2) Different pets!
 --
 --  BUG:
---   1) Allow multiple cats on the same buffer (different window)
 
 local api = vim.api
 
@@ -32,8 +31,8 @@ local compute_line_no = function()
 end
 
 -- pet sprites
-local afk_pet = { "╭──╮ ", "^.^──╯╮" }
-local moved_pet = { "^.^──╮╯", "╰──╯ " }
+local afk_pet = { "  ╭──╮ ", "^.^──╯╮" }
+local moved_pet = { "^.^──╮╯", "  ╰──╯ " }
 
 local afk = function()
   if (namespace) then
@@ -84,7 +83,7 @@ local moved = function()
 end
 
 local start = function()
-  namespace = api.nvim_create_namespace('pet')
+  namespace = api.nvim_create_namespace(string.format('pet%s', api.nvim_get_current_buf()))
   line_num = compute_line_no()
   col_num = 0
   afk()
