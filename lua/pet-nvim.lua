@@ -9,6 +9,8 @@
 --   2) Different pets!
 --
 --  BUG:
+--   1) Cats appear weirdly in Floaterm
+--   2) ~                      in Telescope
 
 local api = vim.api
 
@@ -37,24 +39,26 @@ local moved_pet = { "^.^──╮╯", "  ╰──╯ " }
 local afk = function()
   if (namespace) then
     api.nvim_buf_clear_namespace(0, namespace, 0, -1)
-  end
-  if (line_num == -2) then
-    return
-  end
-  if (line_num == -1) then
-    api.nvim_buf_set_extmark(0, namespace, 0, col_num, {
-      virt_text = {{ afk_pet[2], "Normal" }},
-      virt_text_pos = "right_align",
-    })
-  else 
-    api.nvim_buf_set_extmark(0, namespace, line_num, col_num, {
-      virt_text = {{ afk_pet[1], "Normal" }},
-      virt_text_pos = "right_align",
-    })
-    api.nvim_buf_set_extmark(0, namespace, line_num + 1, col_num, {
-      virt_text = {{ afk_pet[2], "Normal" }},
-      virt_text_pos = "right_align",
-    })
+    if (line_num == -2) then
+      return
+    end
+    if (line_num == -1) then
+      api.nvim_buf_set_extmark(0, namespace, 0, col_num, {
+        virt_text = {{ afk_pet[2], "Normal" }},
+        virt_text_pos = "right_align",
+      })
+    else 
+      api.nvim_buf_set_extmark(0, namespace, line_num, col_num, {
+        virt_text = {{ afk_pet[1], "Normal" }},
+        virt_text_pos = "right_align",
+      })
+      api.nvim_buf_set_extmark(0, namespace, line_num + 1, col_num, {
+        virt_text = {{ afk_pet[2], "Normal" }},
+        virt_text_pos = "right_align",
+      })
+    end
+  else
+    start()
   end
 end
 
@@ -79,11 +83,15 @@ local moved = function()
         virt_text_pos = "right_align",
       })
     end
+  else
+    start()
   end
 end
 
 local start = function()
+  -- TODO: does clearing all namespaces affect other plugins?
   namespace = api.nvim_create_namespace(string.format('pet%s', api.nvim_get_current_buf()))
+  api.nvim_buf_clear_namespace(0, -1, 0, -1)
   line_num = compute_line_no()
   col_num = 0
   afk()
