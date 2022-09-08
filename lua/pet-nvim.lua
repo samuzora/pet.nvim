@@ -11,6 +11,8 @@
 --
 --  BUG:
 --   1) Improper rendering when folded (bottom half goes into fold)
+--   2) Cats duplicate on toggling float window
+--   3) Cats span across multiple lines when the line wraps
 
 local api = vim.api
 local pets = {}
@@ -115,7 +117,7 @@ local moved = function(buf)
       table.insert(pet, draw_pet(pets[buf][2], pets[buf][1], one_line_pet, 0))
     else
       for i, line in ipairs(moved_pet) do
-        table.insert(pet,draw_pet(pets[buf][i + 1], pets[buf][1], line, line_num + i - 1))
+        table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], line, line_num + i - 1))
       end
     end
     return pet
