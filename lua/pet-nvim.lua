@@ -136,11 +136,11 @@ clear = function(buf)
   end
 end
 
-api.nvim_create_autocmd({ "WinEnter", "BufEnter" }, 
+api.nvim_create_autocmd({ "WinEnter", "BufEnter", "BufWinEnter" }, 
   { 
     callback = function() 
       buf = api.nvim_get_current_buf()
-      pets[buf] = moved(buf) 
+      pets[buf] = afk(buf) 
     end,
   }
 )
