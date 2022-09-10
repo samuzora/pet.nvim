@@ -63,7 +63,6 @@ draw_pet = function(id, namespace, text, line)
     -- update pet
     api.nvim_buf_del_extmark(0, namespace, id)
     return api.nvim_buf_set_extmark(0, namespace, line, 0, {
-      id = id,
       virt_text = {{ text, "Normal" }},
       virt_text_pos = "right_align",
     })
@@ -96,8 +95,8 @@ afk = function(buf)
       elseif (line_num == -1) then
         table.insert(pet, draw_pet(pets[buf][2], pets[buf][1], one_line_pet, 0))
       else 
-        for i, line in ipairs(afk_pet) do
-          table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], line, line_num + i - 1))
+        for i, text in ipairs(afk_pet) do
+          table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], text, line_num + i - 1))
           -- table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], string.format("%s", buf), line_num + i - 1))
         end
       end
@@ -118,8 +117,8 @@ moved = function(buf)
     elseif (line_num == -1) then
       table.insert(pet, draw_pet(pets[buf][2], pets[buf][1], one_line_pet, 0))
     else
-      for i, line in ipairs(moved_pet) do
-        table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], line, line_num + i - 1))
+      for i, text in ipairs(moved_pet) do
+        table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], text, line_num + i - 1))
         -- table.insert(pet, draw_pet(pets[buf][i + 1], pets[buf][1], string.format("%s", buf), line_num + i - 1))
       end
     end
@@ -140,7 +139,7 @@ end
 api.nvim_create_autocmd({ "WinEnter", "VimEnter" }, 
   { 
     callback = function(args) 
-      pets[args.buf] = afk(args.buf) 
+      pets[args.buf] = moved(args.buf) 
     end,
   }
 )
@@ -161,11 +160,11 @@ api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" },
   }
 )
 
-api.nvim_create_autocmd({ "WinLeave" },
-  {
-    callback = function(args)
-      pets[args.buf] = afk(args.buf)
-      -- clear(args.buf)
-    end,
-  }
-)
+-- api.nvim_create_autocmd({ "WinLeave" },
+--   {
+--     callback = function(args)
+--       pets[args.buf] = afk(args.buf)
+--       -- clear(args.buf)
+--     end,
+--   }
+-- )
