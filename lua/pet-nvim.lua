@@ -8,7 +8,6 @@
 --   1) Cat paces around
 --   2) Different pets!
 --   3) Config
---   4) Refactor namespace management
 --
 --  BUG:
 --   1) Improper rendering when folded (bottom half goes into fold)
@@ -18,7 +17,7 @@ local api = vim.api
 local pets = {}
 
 -- @returns int
-local function compute_line_num(buf)
+local function compute_line_num()
   local computed_line_num = api.nvim_win_get_cursor(0)[1]
   if computed_line_num - 1 == line_num then
     -- no y-axis move, no need to re-render
@@ -62,15 +61,15 @@ local moved_pet = { "^.^──╮╮", "  ╰──╯╰" }
 draw_pet = function(id, namespace, text, line)
   if id then
     -- update pet
-    api.nvim_buf_del_extmark(buf, namespace, id)
-    return api.nvim_buf_set_extmark(buf, namespace, line, 0, {
+    api.nvim_buf_del_extmark(0, namespace, id)
+    return api.nvim_buf_set_extmark(0, namespace, line, 0, {
       id = id,
       virt_text = {{ text, "Normal" }},
       virt_text_pos = "right_align",
     })
   else 
     -- create pet
-    return api.nvim_buf_set_extmark(buf, namespace, line, 0, {
+    return api.nvim_buf_set_extmark(0, namespace, line, 0, {
       virt_text = {{ text, "Normal" }},
       virt_text_pos = "right_align",
     })
@@ -82,7 +81,7 @@ start = function(buf)
   local namespace = api.nvim_create_namespace('pet')
   if api.nvim_buf_is_valid(buf) then
     pets[buf] = { namespace }
-    line_num = compute_line_num(buf)
+    line_num = compute_line_num()
     return afk(buf)
   end
 end
@@ -112,7 +111,7 @@ end
 -- @returns list
 moved = function(buf)
   if pets[buf] and pets[buf][1] then
-    line_num = compute_line_num(buf)
+    line_num = compute_line_num()
     local pet = { pets[buf][1] }
     if (line_num == -2) then
       return pets[buf]
@@ -131,41 +130,42 @@ moved = function(buf)
 end
 
 clear = function(buf)
-  if pets[buf] and pets[buf][1] then
-    api.nvim_buf_clear_namespace(buf, pets[buf][1], 0, -1)
+  if api.nvim_buf_is_valid(buf) then
+    if pets[buf] and pets[buf][1] then
+      api.nvim_buf_clear_namespace(0, pets[buf][1], 0, -1)
+    end
   end
 end
 
-api.nvim_create_autocmd({ "WinEnter", "BufEnter", "BufWinEnter" }, 
+api.nvim_create_autocmd({ "WinEnter", "VimEnter" }, 
   { 
-    callback = function() 
-      buf = api.nvim_get_current_buf()
-      pets[buf] = afk(buf) 
+    callback = function(args) 
+      pets[args.buf] = afk(args.buf) 
     end,
   }
 )
 
 api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, 
   { 
-    callback = function() 
-      pets[buf] = moved(buf) 
+    callback = function(args) 
+      pets[args.buf] = moved(args.buf) 
     end, 
   }
 )
 
 api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, 
   { 
-    callback = function() 
-      buf = api.nvim_get_current_buf()
-      pets[buf] = afk(buf)
+    callback = function(args) 
+      pets[args.buf] = afk(args.buf)
     end, 
   }
 )
 
-api.nvim_create_autocmd({ "WinLeave", "BufLeave" },
+api.nvim_create_autocmd({ "WinLeave" },
   {
-    callback = function()
-      clear(buf)
+    callback = function(args)
+      pets[args.buf] = afk(args.buf)
+      -- clear(args.buf)
     end,
   }
 )
